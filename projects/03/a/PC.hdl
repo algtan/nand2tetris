@@ -17,4 +17,12 @@ CHIP PC {
 
     PARTS:
     // Put your code here:
+    Inc16 (in=feedback, out=feedbackPlusOne);
+    Mux16 (a=feedback, b=feedbackPlusOne, sel=inc, out=incOut);
+    Mux16 (a=incOut, b=in, sel=load, out=incOrLoad);
+    Mux16 (a=incOrLoad, b[0..15]=false, sel=reset, out=incOrLoadOrReset);
+    
+    // load set to 'true' because we always want to load the value being fed into the register
+    // register also adds an element of time
+    Register (in=incOrLoadOrReset, load=true, out=out, out=feedback);
 }
