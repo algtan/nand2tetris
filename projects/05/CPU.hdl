@@ -40,4 +40,34 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+
+    // A register
+    Not (in=instruction[15], out=isAInstruction);
+    Mux16 (a=outALU, b=instruction, sel=isAInstruction, out=inA);
+    Or (a=isAInstruction, b=instruction[5], out=loadA);
+    ARegister (in=inA, load=loadA, out=outA, out[0..14]=addressM);
+
+    // D register
+    And (a=instruction[15], b=instruction[4], out=loadD);
+    DRegister (in=outALU, load=loadD, out=outD);
+
+    // A or M
+    And (a=instruction[15], b=instruction[12], out=selAorM);
+    Mux16 (a=outA, b=inM, sel=selAorM, out=outAorM);
+
+    // ALU
+    ALU (x=outD, y=outAorM, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=outALU, zr=zr, ng=ng);
+
+    // writeM
+    And (a=instruction[15], b=instruction[3], out=writeM);
+
+    // Program Counter (PC)
+    Not (in=ng, out=outALUisGE);
+    Not (in=zr, out=outALUisNE);
+    Or (a=zr, b=ng, out=outALUisLE);
+    Not (in=outALUisLE, out=outALUisGT);
+
+    Mux8Way16 (a[0]=false, b[0]=outALUisGT, c[0]=zr, d[0]=outALUisGE, e[0]=ng, f[0]=outALUisNE, g[0]=outALUisLE, h[0]=true, sel=instruction[0..2], out[0]=isJumpConditionMet);
+    And (a=isJumpConditionMet, b=instruction[15], out=loadJump);
+    PC (in=outA, load=loadJump, inc=true, reset=reset, out[0..14]=pc);
 }
